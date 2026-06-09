@@ -326,9 +326,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
   <h3 id="debtModalTitle">เพิ่มหนี้ใหม่</h3>
   <label>ชื่อหนี้</label><input id="dName" placeholder="เช่น ผ่อนรถ, สินเชื่อบ้าน">
   <label>เจ้าหนี้ / ธนาคาร</label><input id="dLender" placeholder="(ไม่บังคับ)">
+  <label>ยอดเงินต้น (บาท)</label><input id="dPrincipal" type="number" inputmode="decimal" min="0" placeholder="0">
   <div class="grid2">
-    <div><label>ยอดเงินต้น (บาท)</label><input id="dPrincipal" type="number" inputmode="decimal" min="0" placeholder="0"></div>
-    <div><label>จำนวนงวด</label><input id="dInst" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+    <div><label>จำนวนงวด</label><input id="dInst" type="number" inputmode="numeric" min="0" placeholder="เช่น 5"></div>
+    <div><label>จ่ายงวดละ (บาท)</label><input id="dInstAmount" type="number" inputmode="decimal" min="0" placeholder="ไม่บังคับ"></div>
   </div>
   <label>ประเภทดอกเบี้ย</label>
   <select id="dIntType" onchange="onIntTypeChange()">
@@ -710,9 +711,11 @@ function initNotifBtn(){if(('Notification' in window)&&Notification.permission==
 // ---- debt interest ----
 function computeDebt(d){
   const P=Number(d.principal),n=d.installments||0,rate=Number(d.interest_rate||0),type=d.interest_type||'none';
+  const explicitPer=Number(d.installment_amount||0);
   let total=P,perInst=n?P/n:0;
   if(type==='flat'&&n>0&&rate>0){const interest=P*(rate/100)*(n/12);total=P+interest;perInst=total/n;}
   else if(type==='reducing'&&n>0&&rate>0){const i=rate/100/12;perInst=i>0?P*i/(1-Math.pow(1+i,-n)):P/n;total=perInst*n;}
+  if(explicitPer>0){perInst=explicitPer;if(n>0)total=explicitPer*n;}
   return {total,perInst,interest:total-P};
 }
 function onIntTypeChange(){
@@ -763,8 +766,8 @@ function renderDebts(){
       <button onclick="delDebt(${d.id})">ลบ</button></div>${log}</div>`;
   }).join('');
 }
-function openDebtForm(){editDebtId=null;document.getElementById('debtModalTitle').textContent='เพิ่มหนี้ใหม่';document.getElementById('debtSaveBtn').textContent='บันทึกหนี้';['dName','dLender','dPrincipal','dInst','dDueDay','dIntRate'].forEach(i=>document.getElementById(i).value='');document.getElementById('dIntType').value='none';onIntTypeChange();openModal('mDebt');}
-function openDebtEdit(id){editDebtId=id;const d=debts.find(x=>x.id===id);document.getElementById('debtModalTitle').textContent='แก้ไขหนี้';document.getElementById('debtSaveBtn').textContent='บันทึกการแก้ไข';document.getElementById('dName').value=d.name||'';document.getElementById('dLender').value=d.lender||'';document.getElementById('dPrincipal').value=d.principal||'';document.getElementById('dInst').value=d.installments||'';document.getElementById('dDueDay').value=d.due_day||'';document.getElementById('dIntType').value=d.interest_type||'none';document.getElementById('dIntRate').value=d.interest_rate||'';onIntTypeChange();openModal('mDebt');}
+function openDebtForm(){editDebtId=null;document.getElementById('debtModalTitle').textContent='เพิ่มหนี้ใหม่';document.getElementById('debtSaveBtn').textContent='บันทึกหนี้';['dName','dLender','dPrincipal','dInst','dInstAmount','dDueDay','dIntRate'].forEach(i=>document.getElementById(i).value='');document.getElementById('dIntType').value='none';onIntTypeChange();openModal('mDebt');}
+function openDebtEdit(id){editDebtId=id;const d=debts.find(x=>x.id===id);document.getElementById('debtModalTitle').textContent='แก้ไขหนี้';document.getElementById('debtSaveBtn').textContent='บันทึกการแก้ไข';document.getElementById('dName').value=d.name||'';document.getElementById('dLender').value=d.lender||'';document.getElementById('dPrincipal').value=d.principal||'';document.getElementById('dInst').value=d.installments||'';document.getElementById('dInstAmount').value=d.installment_amount||'';document.getElementById('dDueDay').value=d.due_day||'';document.getElementById('dIntType').value=d.interest_type||'none';document.getElementById('dIntRate').value=d.interest_rate||'';onIntTypeChange();openModal('mDebt');}
 async function saveDebt(){
   if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
   const name=document.getElementById('dName').value.trim();
@@ -773,7 +776,7 @@ async function saveDebt(){
   if(!principal||principal<=0) return toast('กรอกยอดเงินต้น');
   const interest_type=document.getElementById('dIntType').value;
   const interest_rate=interest_type==='none'?0:(parseFloat(document.getElementById('dIntRate').value)||0);
-  const payload={name,lender:document.getElementById('dLender').value||null,principal,installments:parseInt(document.getElementById('dInst').value)||0,due_day:parseInt(document.getElementById('dDueDay').value)||null,interest_type,interest_rate};
+  const payload={name,lender:document.getElementById('dLender').value||null,principal,installments:parseInt(document.getElementById('dInst').value)||0,installment_amount:parseFloat(document.getElementById('dInstAmount').value)||null,due_day:parseInt(document.getElementById('dDueDay').value)||null,interest_type,interest_rate};
   let error;
   if(editDebtId)({error}=await sb.from('debts').update(payload).eq('id',editDebtId));
   else({error}=await sb.from('debts').insert(payload));
