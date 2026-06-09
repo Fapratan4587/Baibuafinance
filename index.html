@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
 :root{
   --bg:#0e1117; --panel:#161b22; --panel2:#1c232d; --line:#2a323d;
@@ -16,6 +17,7 @@
   --debt:#d29922; --debt-dim:#3a2e10;
   --accent:#58a6ff; --accent-dim:#13283f;
   --warn:#ff9500; --warn-dim:#3a2800;
+  --save:#a371f7; --save-dim:#2a1a45;
   --r:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -27,18 +29,29 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--
 .brand .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 14px var(--accent)}
 .sub{color:var(--faint);font-size:12.5px;margin-top:2px}
 
-.hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:14px;position:relative;overflow:hidden}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px 20px;margin-top:14px;position:relative;overflow:hidden}
 .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,var(--accent-dim),transparent 70%)}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;z-index:2}
+.month-nav button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;cursor:pointer;display:grid;place-items:center}
+.month-nav .mlabel{font-family:'Sora',sans-serif;font-weight:700;font-size:15px}
 .hero .lab{color:var(--muted);font-size:13px}
-.hero .bal{font-family:'Sora',sans-serif;font-weight:800;font-size:38px;letter-spacing:-1px;margin-top:4px;line-height:1.1}
+.hero .bal{font-family:'Sora',sans-serif;font-weight:800;font-size:34px;letter-spacing:-1px;margin-top:4px;line-height:1.1}
 .hero .row{display:flex;gap:10px;margin-top:16px}
 .hero .mini{flex:1;background:var(--panel2);border-radius:10px;padding:11px 13px}
 .hero .mini .t{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px}
-.hero .mini .v{font-family:'Sora',sans-serif;font-weight:700;font-size:18px;margin-top:3px}
-.pos{color:var(--pos)} .neg{color:var(--neg)} .debt-c{color:var(--debt)}
+.hero .mini .v{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-top:3px}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .debt-c{color:var(--debt)} .save-c{color:var(--save)}
 
-.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px;margin-top:14px;position:sticky;top:78px;z-index:15}
-.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:600;padding:9px 4px;border-radius:8px;cursor:pointer;transition:.15s}
+.period-tog{display:flex;gap:6px;margin-top:14px}
+.period-tog button{flex:1;padding:8px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.period-tog button.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.range-row{display:none;gap:9px;margin-top:10px}
+.range-row.on{display:flex}
+.range-row>div{flex:1}
+.range-row input{margin-bottom:0}
+
+.tabs{display:flex;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px;margin-top:14px;position:sticky;top:78px;z-index:15}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;padding:9px 2px;border-radius:8px;cursor:pointer;transition:.15s}
 .tabs button.on{background:var(--panel2);color:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.04)}
 
 .view{display:none;margin-top:16px}
@@ -47,6 +60,9 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--
 
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
 .card h3{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.chart-box{position:relative;height:240px}
+.chart-box.bar{height:220px}
+.chart-empty{text-align:center;color:var(--faint);font-size:13px;padding:30px 0}
 .item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
 .item:last-child{border-bottom:0}
 .ico{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:18px;background:var(--panel2);flex-shrink:0}
@@ -54,6 +70,7 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--
 .item .nm{font-weight:500;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .meta{font-size:12px;color:var(--faint)}
 .item .amt{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;white-space:nowrap}
+.tag-debt{font-size:10px;background:var(--debt-dim);color:var(--debt);padding:1px 6px;border-radius:5px;margin-left:6px;font-weight:600}
 .del{background:none;border:0;color:var(--faint);cursor:pointer;font-size:17px;padding:4px 6px;border-radius:6px}
 .del:hover{color:var(--neg);background:var(--neg-dim)}
 .empty{text-align:center;color:var(--faint);font-size:13.5px;padding:26px 0}
@@ -71,41 +88,40 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 .btn:active{transform:scale(.99)}
 .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
 
-/* custom category row */
 .new-cat-row{display:none;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:11px 13px;margin-bottom:13px;gap:8px;align-items:center;flex-wrap:wrap}
 .new-cat-row.on{display:flex}
 .new-cat-row input{margin-bottom:0;flex:1;min-width:120px}
 .new-cat-row select{margin-bottom:0;width:auto}
 
-/* debt */
-.debt-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:13px}
-.debt-card.due-soon{border-color:var(--warn)}
-.debt-card.due-today{border-color:var(--neg);box-shadow:0 0 0 1px var(--neg-dim)}
-.debt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.debt-name{font-family:'Sora',sans-serif;font-weight:700;font-size:16px}
-.debt-lender{font-size:12px;color:var(--faint)}
+.dcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:13px}
+.dcard.due-soon{border-color:var(--warn)}
+.dcard.due-today{border-color:var(--neg);box-shadow:0 0 0 1px var(--neg-dim)}
+.dcard.goal-done{border-color:var(--save)}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.dname{font-family:'Sora',sans-serif;font-weight:700;font-size:16px}
+.dlender{font-size:12px;color:var(--faint)}
 .bar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:12px 0 7px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pos),#2ea043);border-radius:99px;transition:width .4s}
-.debt-stats{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
-.debt-stats b{color:var(--ink);font-family:'Sora',sans-serif}
-.debt-act{display:flex;gap:8px;margin-top:13px}
-.debt-act button{flex:1;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
-.debt-act .pay{background:var(--debt-dim);border-color:var(--debt);color:var(--debt)}
-.debt-act .edit-btn{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.bar.save i{background:linear-gradient(90deg,var(--save),#7c4dd6)}
+.dstats{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+.dstats b{color:var(--ink);font-family:'Sora',sans-serif}
+.dact{display:flex;gap:8px;margin-top:13px}
+.dact button{flex:1;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.dact .pay{background:var(--debt-dim);border-color:var(--debt);color:var(--debt)}
+.dact .dep{background:var(--save-dim);border-color:var(--save);color:var(--save)}
+.dact .edit-btn{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .badge{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--pos-dim);color:var(--pos);font-weight:600}
 .badge.closed{background:var(--panel2);color:var(--faint)}
 .badge.due{background:var(--neg-dim);color:var(--neg)}
 .badge.soon{background:var(--warn-dim);color:var(--warn)}
+.badge.save{background:var(--save-dim);color:var(--save)}
 .pay-log{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
 .pay-log .pl{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:var(--muted)}
 
-/* due alert banner */
 .due-banner{background:var(--neg-dim);border:1px solid var(--neg);border-radius:12px;padding:13px 15px;font-size:13px;margin-bottom:14px;display:none}
-.due-banner.on{display:block}
-.due-banner b{color:var(--neg)}
+.due-banner.on{display:block}.due-banner b{color:var(--neg)}
 .soon-banner{background:var(--warn-dim);border:1px solid var(--warn);border-radius:12px;padding:13px 15px;font-size:13px;margin-bottom:14px;display:none}
-.soon-banner.on{display:block}
-.soon-banner b{color:var(--warn)}
+.soon-banner.on{display:block}.soon-banner b{color:var(--warn)}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:50;backdrop-filter:blur(2px)}
 .modal.on{display:flex}
@@ -115,7 +131,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 
 .setup{background:var(--debt-dim);border:1px solid var(--debt);color:#f0c674;border-radius:12px;padding:13px 15px;font-size:13px;margin-top:14px}
 .setup b{color:#ffd866}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 .toast.on{opacity:1;bottom:30px}
 .filter{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap}
 .filter button{padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-family:inherit;font-size:12.5px;cursor:pointer}
@@ -130,40 +146,62 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div>
         <div class="brand"><span class="dot"></span>บัญชีของฉัน</div>
-        <div class="sub">รายรับ · รายจ่าย · หนี้สิน</div>
+        <div class="sub">รายรับ · รายจ่าย · หนี้สิน · เงินออม</div>
       </div>
       <button class="notif-btn" id="notifBtn" onclick="requestNotif()">🔔 แจ้งเตือน</button>
     </div>
   </header>
 
   <div id="setupBanner" class="setup" style="display:none">
-    ⚠️ ยังไม่ได้ตั้งค่า <b>Supabase</b> — เปิดไฟล์ <b>index.html</b> แก้ค่า <b>SUPABASE_URL</b> และ <b>SUPABASE_KEY</b>
+    ⚠️ ยังไม่ได้ตั้งค่า <b>Supabase</b>
   </div>
 
-  <!-- แจ้งเตือนวันครบกำหนด -->
   <div class="due-banner" id="dueBanner"></div>
   <div class="soon-banner" id="soonBanner"></div>
 
   <div class="hero">
-    <div class="lab">ยอดคงเหลือสุทธิ</div>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)" id="prevM">‹</button>
+      <span class="mlabel" id="monthLabel">เดือนนี้</span>
+      <button onclick="changeMonth(1)" id="nextM">›</button>
+    </div>
+    <div class="lab" id="balLab">คงเหลือเดือนนี้ (รายรับ − รายจ่าย)</div>
     <div class="bal" id="netBal">฿0</div>
     <div class="row">
       <div class="mini"><div class="t pos">▲ รายรับ</div><div class="v pos" id="sumIn">฿0</div></div>
       <div class="mini"><div class="t neg">▼ รายจ่าย</div><div class="v neg" id="sumOut">฿0</div></div>
-      <div class="mini"><div class="t debt-c">⛓ หนี้คงเหลือ</div><div class="v debt-c" id="sumDebt">฿0</div></div>
+      <div class="mini"><div class="t save-c">🐷 ออม</div><div class="v save-c" id="sumSave">฿0</div></div>
+    </div>
+    <div class="period-tog">
+      <button class="on" data-p="month" onclick="setPeriod('month')">รายเดือน</button>
+      <button data-p="range" onclick="setPeriod('range')">กำหนดช่วง</button>
+    </div>
+    <div class="range-row" id="rangeRow">
+      <div><label>ตั้งแต่</label><input type="date" id="fromDate" onchange="renderAll()"></div>
+      <div><label>ถึง</label><input type="date" id="toDate" onchange="renderAll()"></div>
     </div>
   </div>
 
   <div class="tabs">
     <button class="on" data-v="home">หน้าหลัก</button>
-    <button data-v="add">เพิ่มรายการ</button>
+    <button data-v="add">เพิ่ม</button>
     <button data-v="debt">หนี้สิน</button>
+    <button data-v="save">เงินออม</button>
   </div>
 
   <!-- HOME -->
   <div class="view on" id="v-home">
     <div class="card">
-      <h3>รายการล่าสุด <span style="font-weight:500;color:var(--faint);font-size:12px" id="txCount"></span></h3>
+      <h3>รายจ่ายแยกประเภท</h3>
+      <div class="chart-box" id="pieBox"><canvas id="pieChart"></canvas></div>
+      <div class="chart-empty" id="pieEmpty" style="display:none">ยังไม่มีรายจ่ายในช่วงนี้</div>
+    </div>
+    <div class="card">
+      <h3>แนวโน้ม 6 เดือน (รับ vs จ่าย)</h3>
+      <div class="chart-box bar"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>รายการ <span style="font-weight:500;color:var(--faint);font-size:12px" id="txCount"></span></h3>
       <div class="filter">
         <button class="on" data-f="all">ทั้งหมด</button>
         <button data-f="income">รายรับ</button>
@@ -182,15 +220,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
         <button class="inc" id="segInc" onclick="setTxType('income')">รายรับ</button>
       </div>
       <label>จำนวนเงิน (บาท)</label>
-      <input class="amount-in" id="txAmount" type="number" inputmode="decimal" placeholder="0.00">
+      <input class="amount-in" id="txAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
       <label>ชื่อรายการ (จ่ายอะไร / รับจากอะไร)</label>
       <input id="txTitle" type="text" placeholder="เช่น ค่าข้าว, เงินเดือน, ค่าน้ำมัน">
       <label>หมวดหมู่</label>
       <select id="txCat" onchange="onCatChange()"></select>
-      <!-- กรอกหมวดใหม่ -->
       <div class="new-cat-row" id="newCatRow">
         <input id="newCatName" placeholder="ชื่อหมวดหมู่ใหม่" style="min-width:140px">
-        <input id="newCatIcon" placeholder="Emoji เช่น 🍕" style="width:70px;min-width:0">
+        <input id="newCatIcon" placeholder="Emoji 🍕" style="width:70px;min-width:0">
         <select id="newCatType" style="width:auto;min-width:0">
           <option value="expense">รายจ่าย</option>
           <option value="income">รายรับ</option>
@@ -199,7 +236,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
       </div>
       <div class="grid2">
         <div><label>วันที่</label><input id="txDate" type="date"></div>
-        <div><label>หมายเหตุเพิ่มเติม</label><input id="txNote" type="text" placeholder="(ไม่บังคับ)"></div>
+        <div><label>หมายเหตุ</label><input id="txNote" type="text" placeholder="(ไม่บังคับ)"></div>
       </div>
       <button class="btn" onclick="saveTx()">บันทึกรายการ</button>
     </div>
@@ -212,41 +249,62 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
       <div id="debtList"><div class="empty">ยังไม่มีรายการหนี้</div></div>
     </div>
   </div>
-</div>
 
-<!-- modal: add/edit debt -->
-<div class="modal" id="mDebt">
-  <div class="sheet">
-    <h3 id="debtModalTitle">เพิ่มหนี้ใหม่</h3>
-    <label>ชื่อหนี้</label>
-    <input id="dName" placeholder="เช่น ผ่อนรถ, สินเชื่อบ้าน">
-    <label>เจ้าหนี้ / ธนาคาร</label>
-    <input id="dLender" placeholder="(ไม่บังคับ)">
-    <div class="grid2">
-      <div><label>ยอดเงินต้น (บาท)</label><input id="dPrincipal" type="number" inputmode="decimal" placeholder="0"></div>
-      <div><label>จำนวนงวดทั้งหมด</label><input id="dInst" type="number" inputmode="numeric" placeholder="0 = ไม่กำหนด"></div>
+  <!-- SAVE -->
+  <div class="view" id="v-save">
+    <div class="card">
+      <h3>เป้าหมายการออม <button class="badge save" style="border:0;cursor:pointer;font-size:12px;padding:5px 11px" onclick="openGoalForm()">+ เพิ่มเป้าหมาย</button></h3>
+      <div id="goalList"><div class="empty">ยังไม่มีเป้าหมายการออม</div></div>
     </div>
-    <label>วันครบกำหนดชำระ (วันที่ของเดือน เช่น 5 = ทุกวันที่ 5)</label>
-    <input id="dDueDay" type="number" inputmode="numeric" placeholder="เช่น 5" min="1" max="31">
-    <button class="btn" id="debtSaveBtn" onclick="saveDebt()">บันทึกหนี้</button>
-    <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mDebt')">ยกเลิก</button>
   </div>
 </div>
 
-<!-- modal: pay installment -->
-<div class="modal" id="mPay">
-  <div class="sheet">
-    <h3 id="payTitle">ผ่อนชำระ</h3>
-    <label>จำนวนเงินที่จ่าย (บาท)</label>
-    <input class="amount-in" id="payAmount" type="number" inputmode="decimal" placeholder="0.00">
-    <div class="grid2">
-      <div><label>วันที่จ่าย</label><input id="payDate" type="date"></div>
-      <div><label>งวดที่</label><input id="payNo" type="number" inputmode="numeric" placeholder="อัตโนมัติ"></div>
-    </div>
-    <button class="btn" onclick="savePayment()">บันทึกการชำระ</button>
-    <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mPay')">ยกเลิก</button>
+<!-- modal: debt -->
+<div class="modal" id="mDebt"><div class="sheet">
+  <h3 id="debtModalTitle">เพิ่มหนี้ใหม่</h3>
+  <label>ชื่อหนี้</label><input id="dName" placeholder="เช่น ผ่อนรถ, สินเชื่อบ้าน">
+  <label>เจ้าหนี้ / ธนาคาร</label><input id="dLender" placeholder="(ไม่บังคับ)">
+  <div class="grid2">
+    <div><label>ยอดเงินต้น (บาท)</label><input id="dPrincipal" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+    <div><label>จำนวนงวด</label><input id="dInst" type="number" inputmode="numeric" min="0" placeholder="0 = ไม่กำหนด"></div>
   </div>
-</div>
+  <label>วันครบกำหนดชำระ (วันที่ของเดือน)</label>
+  <input id="dDueDay" type="number" inputmode="numeric" placeholder="เช่น 5" min="1" max="31">
+  <button class="btn" id="debtSaveBtn" onclick="saveDebt()">บันทึกหนี้</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mDebt')">ยกเลิก</button>
+</div></div>
+
+<!-- modal: pay -->
+<div class="modal" id="mPay"><div class="sheet">
+  <h3 id="payTitle">ผ่อนชำระ</h3>
+  <label>จำนวนเงินที่จ่าย (บาท)</label>
+  <input class="amount-in" id="payAmount" type="number" inputmode="decimal" min="0" placeholder="0.00">
+  <div class="grid2">
+    <div><label>วันที่จ่าย</label><input id="payDate" type="date"></div>
+    <div><label>งวดที่</label><input id="payNo" type="number" inputmode="numeric" placeholder="อัตโนมัติ"></div>
+  </div>
+  <button class="btn" onclick="savePayment()">บันทึกการชำระ</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mPay')">ยกเลิก</button>
+</div></div>
+
+<!-- modal: goal -->
+<div class="modal" id="mGoal"><div class="sheet">
+  <h3 id="goalModalTitle">เพิ่มเป้าหมายการออม</h3>
+  <label>ชื่อเป้าหมาย</label><input id="gName" placeholder="เช่น เงินสำรองฉุกเฉิน, ซื้อโทรศัพท์">
+  <label>ยอดเป้าหมาย (บาท)</label><input id="gTarget" type="number" inputmode="decimal" min="0" placeholder="0">
+  <button class="btn" id="goalSaveBtn" onclick="saveGoal()">บันทึกเป้าหมาย</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mGoal')">ยกเลิก</button>
+</div></div>
+
+<!-- modal: deposit -->
+<div class="modal" id="mDep"><div class="sheet">
+  <h3 id="depTitle">ฝากเงินออม</h3>
+  <label>จำนวนเงิน (บาท)</label>
+  <input class="amount-in" id="depAmount" type="number" inputmode="decimal" min="0" placeholder="0.00">
+  <label>วันที่</label><input id="depDate" type="date">
+  <button class="btn" onclick="saveDeposit()">บันทึกการออม</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mDep')">ยกเลิก</button>
+</div></div>
 
 <div class="toast" id="toast"></div>
 
@@ -257,16 +315,59 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // ===================================================================
 
 const configured = !SUPABASE_URL.includes("YOUR_");
-let sb = null;
-if(configured) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let sb=null;
+if(configured) sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 else document.getElementById('setupBanner').style.display='block';
 
-let categories=[], txns=[], debts=[], payments=[];
-let txType='expense', txFilter='all', curDebtId=null, editDebtId=null;
+let categories=[],txns=[],debts=[],payments=[],goals=[],deposits=[];
+let txType='expense',txFilter='all',curDebtId=null,editDebtId=null,curGoalId=null,editGoalId=null;
+let periodMode='month';
+let pieChart=null,barChart=null;
 
-const baht = n => '฿'+Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
-const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2000); };
-const fmtDate = d => new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+const _now=new Date();
+let curMonth=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
+
+const baht=n=>'฿'+Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
+const fmtDate=d=>new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);};
+const mkey=d=>(''+d).slice(0,7);
+const todayStr=()=>new Date().toISOString().slice(0,10);
+
+function monthLabelText(){return new Date(curMonth+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'});}
+function changeMonth(delta){
+  const [y,m]=curMonth.split('-').map(Number);
+  const d=new Date(y,m-1+delta,1);
+  curMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  document.getElementById('monthLabel').textContent=monthLabelText();
+  renderAll();
+}
+function setPeriod(p){
+  periodMode=p;
+  document.querySelectorAll('.period-tog button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  document.getElementById('rangeRow').classList.toggle('on',p==='range');
+  document.getElementById('prevM').style.visibility=p==='month'?'visible':'hidden';
+  document.getElementById('nextM').style.visibility=p==='month'?'visible':'hidden';
+  if(p==='range'){
+    if(!document.getElementById('fromDate').value){
+      document.getElementById('fromDate').value=curMonth+'-01';
+      document.getElementById('toDate').value=todayStr();
+    }
+    document.getElementById('monthLabel').textContent='ช่วงที่เลือก';
+    document.getElementById('balLab').textContent='คงเหลือช่วงนี้ (รายรับ − รายจ่าย)';
+  } else {
+    document.getElementById('monthLabel').textContent=monthLabelText();
+    document.getElementById('balLab').textContent='คงเหลือเดือนนี้ (รายรับ − รายจ่าย)';
+  }
+  renderAll();
+}
+function inPeriod(dateStr){
+  if(periodMode==='month') return mkey(dateStr)===curMonth;
+  const f=document.getElementById('fromDate').value, t=document.getElementById('toDate').value;
+  const d=(''+dateStr).slice(0,10);
+  if(f&&d<f) return false;
+  if(t&&d>t) return false;
+  return true;
+}
 
 // tabs
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
@@ -274,11 +375,11 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   document.getElementById('v-'+b.dataset.v).classList.add('on');
+  if(b.dataset.v==='home') setTimeout(renderCharts,60);
 });
-// filter
 document.querySelectorAll('.filter button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.filter button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); txFilter=b.dataset.f; renderTx();
+  b.classList.add('on');txFilter=b.dataset.f;renderTx();
 });
 
 function setTxType(t){
@@ -291,14 +392,11 @@ function setTxType(t){
 function fillCats(){
   const sel=document.getElementById('txCat');
   const list=categories.filter(c=>c.type===txType);
-  sel.innerHTML = list.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-  sel.innerHTML += '<option value="__new__">➕ เพิ่มหมวดใหม่...</option>';
+  sel.innerHTML=list.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  sel.innerHTML+='<option value="__new__">➕ เพิ่มหมวดใหม่...</option>';
   document.getElementById('newCatRow').classList.remove('on');
 }
-function onCatChange(){
-  const v=document.getElementById('txCat').value;
-  document.getElementById('newCatRow').classList.toggle('on', v==='__new__');
-}
+function onCatChange(){document.getElementById('newCatRow').classList.toggle('on',document.getElementById('txCat').value==='__new__');}
 async function saveNewCat(){
   const name=document.getElementById('newCatName').value.trim();
   const icon=document.getElementById('newCatIcon').value.trim()||'📦';
@@ -307,163 +405,262 @@ async function saveNewCat(){
   const {data,error}=await sb.from('categories').insert({name,icon,type}).select().single();
   if(error) return toast('ผิดพลาด: '+error.message);
   categories.push(data);
-  document.getElementById('newCatName').value='';
-  document.getElementById('newCatIcon').value='';
-  fillCats();
-  // เลือกหมวดที่เพิ่งสร้าง
-  document.getElementById('txCat').value=data.id;
+  document.getElementById('newCatName').value='';document.getElementById('newCatIcon').value='';
+  fillCats();document.getElementById('txCat').value=data.id;
   toast('เพิ่มหมวดแล้ว ✓');
 }
 
-function openModal(id){ document.getElementById(id).classList.add('on'); }
-function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+function openModal(id){document.getElementById(id).classList.add('on');}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
 
-// -------- LOAD --------
 async function loadAll(){
   if(!sb) return;
-  const [c,t,d,p]=await Promise.all([
+  const [c,t,d,p,g,dep]=await Promise.all([
     sb.from('categories').select('*').order('id'),
     sb.from('transactions').select('*').order('tx_date',{ascending:false}).order('id',{ascending:false}),
     sb.from('debts').select('*').order('created_at',{ascending:false}),
     sb.from('debt_payments').select('*').order('pay_date',{ascending:false}),
+    sb.from('savings_goals').select('*').order('created_at',{ascending:false}),
+    sb.from('savings_deposits').select('*').order('deposit_date',{ascending:false}),
   ]);
-  categories=c.data||[]; txns=t.data||[]; debts=d.data||[]; payments=p.data||[];
-  fillCats(); renderTx(); renderDebts(); renderSummary(); checkDueDates();
+  categories=c.data||[];txns=t.data||[];debts=d.data||[];payments=p.data||[];
+  goals=g.data||[];deposits=dep.data||[];
+  document.getElementById('monthLabel').textContent=monthLabelText();
+  fillCats();renderAll();checkDueDates();
+}
+function renderAll(){renderSummary();renderTx();renderDebts();renderGoals();renderCharts();}
+
+// รายการในช่วง = transactions + ผ่อนหนี้(รายจ่าย)
+function periodEntries(){
+  const list=[];
+  txns.filter(x=>inPeriod(x.tx_date)).forEach(x=>{
+    const cat=categories.find(c=>c.id===x.category_id);
+    list.push({kind:'tx',id:x.id,type:x.type,amount:Number(x.amount),date:x.tx_date,
+      icon:cat?cat.icon:(x.type==='income'?'💰':'💸'),
+      title:x.title||(cat?cat.name:(x.category_name||'-')),
+      catName:cat?cat.name:(x.category_name||'อื่น ๆ'),
+      sub:(cat&&x.title)?cat.name:'',note:x.note});
+  });
+  payments.filter(p=>inPeriod(p.pay_date)).forEach(p=>{
+    const d=debts.find(x=>x.id===p.debt_id);
+    list.push({kind:'debt',id:p.id,type:'expense',amount:Number(p.amount),date:p.pay_date,
+      icon:'⛓',title:'ผ่อน: '+(d?d.name:'หนี้'),catName:'ผ่อนหนี้',
+      sub:p.installment_no?('งวดที่ '+p.installment_no):'',note:null,isDebt:true});
+  });
+  list.sort((a,b)=>new Date(b.date)-new Date(a.date)||(b.id-a.id));
+  return list;
 }
 
 function renderSummary(){
-  const sumIn=txns.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0);
-  const sumOut=txns.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
-  const debtRemain=debts.filter(d=>d.status==='active').reduce((a,d)=>{
-    const paid=payments.filter(p=>p.debt_id===d.id).reduce((s,p)=>s+Number(p.amount),0);
-    return a+Math.max(0,Number(d.principal)-paid);
-  },0);
+  const e=periodEntries();
+  const sumIn=e.filter(x=>x.type==='income').reduce((a,x)=>a+x.amount,0);
+  const sumOut=e.filter(x=>x.type==='expense').reduce((a,x)=>a+x.amount,0);
+  const saveTot=deposits.filter(d=>inPeriod(d.deposit_date)).reduce((a,d)=>a+Number(d.amount),0);
   document.getElementById('sumIn').textContent=baht(sumIn);
   document.getElementById('sumOut').textContent=baht(sumOut);
-  document.getElementById('sumDebt').textContent=baht(debtRemain);
+  document.getElementById('sumSave').textContent=baht(saveTot);
   const net=sumIn-sumOut;
   const el=document.getElementById('netBal');
-  el.textContent=baht(net);
-  el.style.color=net<0?'var(--neg)':'var(--ink)';
-}
-
-// -------- DUE DATE CHECK --------
-function checkDueDates(){
-  const today=new Date(); const todayDay=today.getDate();
-  const dueToday=[], dueSoon=[];
-  debts.filter(d=>d.status==='active'&&d.due_day).forEach(d=>{
-    const diff=d.due_day-todayDay;
-    if(diff===0) dueToday.push(d);
-    else if(diff>0&&diff<=5) dueSoon.push({d,diff});
-  });
-  const db=document.getElementById('dueBanner');
-  const sb2=document.getElementById('soonBanner');
-  if(dueToday.length){
-    db.innerHTML='🔴 <b>ครบกำหนดชำระวันนี้!</b> '+dueToday.map(d=>`${d.name}`).join(', ');
-    db.classList.add('on');
-    // push notification
-    if(Notification.permission==='granted'){
-      dueToday.forEach(d=>{
-        new Notification('💸 ครบกำหนดชำระวันนี้',{body:d.name+(d.lender?' · '+d.lender:''),icon:'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4b8.png'});
-      });
-    }
-  } else { db.classList.remove('on'); }
-  if(dueSoon.length){
-    sb2.innerHTML='🟡 <b>ใกล้ถึงวันชำระ:</b> '+dueSoon.map(x=>`${x.d.name} (อีก ${x.diff} วัน)`).join(', ');
-    sb2.classList.add('on');
-  } else { sb2.classList.remove('on'); }
-}
-
-// request notification permission
-async function requestNotif(){
-  if(!('Notification' in window)) return toast('เบราว์เซอร์ไม่รองรับการแจ้งเตือน');
-  const perm=await Notification.requestPermission();
-  if(perm==='granted'){
-    document.getElementById('notifBtn').classList.add('on');
-    document.getElementById('notifBtn').textContent='🔔 เปิดแจ้งเตือนแล้ว';
-    toast('เปิดการแจ้งเตือนแล้ว ✓');
-    checkDueDates();
-  } else {
-    toast('ไม่ได้รับอนุญาตแจ้งเตือน');
-  }
-}
-function initNotifBtn(){
-  if(Notification.permission==='granted'){
-    document.getElementById('notifBtn').classList.add('on');
-    document.getElementById('notifBtn').textContent='🔔 เปิดแจ้งเตือนแล้ว';
-  }
+  el.textContent=baht(net);el.style.color=net<0?'var(--neg)':'var(--ink)';
 }
 
 function renderTx(){
   const wrap=document.getElementById('txList');
-  let list=txns;
-  if(txFilter!=='all') list=txns.filter(x=>x.type===txFilter);
+  let list=periodEntries();
+  if(txFilter!=='all') list=list.filter(e=>e.type===txFilter);
   document.getElementById('txCount').textContent=list.length?`(${list.length})`:'';
-  if(!list.length){ wrap.innerHTML='<div class="empty">ยังไม่มีรายการ</div>'; return; }
-  wrap.innerHTML=list.map(x=>{
-    const cat=categories.find(c=>c.id===x.category_id);
-    const icon=cat?cat.icon:(x.type==='income'?'💰':'💸');
-    // แสดงชื่อรายการ (title ก่อน ถ้าไม่มีใช้ category name)
-    const title=x.title||(cat?cat.name:(x.category_name||'-'));
-    const sub=(cat&&x.title)?cat.name:'';
-    const sign=x.type==='income'?'+':'-';
-    const cls=x.type==='income'?'pos':'neg';
+  if(!list.length){wrap.innerHTML='<div class="empty">ยังไม่มีรายการในช่วงนี้</div>';return;}
+  wrap.innerHTML=list.map(e=>{
+    const sign=e.type==='income'?'+':'-';
+    const cls=e.type==='income'?'pos':'neg';
+    const meta=[fmtDate(e.date)];if(e.sub)meta.push(e.sub);
     return `<div class="item">
-      <div class="ico">${icon}</div>
-      <div class="info">
-        <div class="nm">${title}${x.note?` · ${x.note}`:''}</div>
-        <div class="meta">${fmtDate(x.tx_date)}${sub?' · '+sub:''}</div>
-      </div>
-      <div class="amt ${cls}">${sign}${baht(x.amount).slice(1)}</div>
-      <button class="del" onclick="delTx(${x.id})">✕</button>
+      <div class="ico">${e.icon}</div>
+      <div class="info"><div class="nm">${e.title}${e.note?` · ${e.note}`:''}${e.isDebt?'<span class="tag-debt">ผ่อนหนี้</span>':''}</div>
+      <div class="meta">${meta.join(' · ')}</div></div>
+      <div class="amt ${cls}">${sign}${baht(e.amount).slice(1)}</div>
+      ${e.isDebt?'<span class="del" style="cursor:default;color:var(--faint)">⛓</span>':`<button class="del" onclick="delTx(${e.id})">✕</button>`}
     </div>`;
   }).join('');
 }
 
+// -------- CHARTS --------
+const PIE_COLORS=['#f85149','#d29922','#58a6ff','#3fb950','#a371f7','#ec6cb9','#56d4dd','#ff9500','#8b96a3','#bc8cff'];
+function renderCharts(){
+  if(typeof Chart==='undefined') return;
+  // pie: รายจ่ายแยกหมวด ช่วงที่เลือก
+  const exp=periodEntries().filter(e=>e.type==='expense');
+  const byCat={};
+  exp.forEach(e=>{byCat[e.catName]=(byCat[e.catName]||0)+e.amount;});
+  const labels=Object.keys(byCat), vals=labels.map(l=>byCat[l]);
+  const pieEmpty=document.getElementById('pieEmpty'), pieBox=document.getElementById('pieBox');
+  if(!labels.length){pieBox.style.display='none';pieEmpty.style.display='block';}
+  else{pieBox.style.display='block';pieEmpty.style.display='none';}
+  if(pieChart)pieChart.destroy();
+  if(labels.length){
+    pieChart=new Chart(document.getElementById('pieChart'),{
+      type:'doughnut',
+      data:{labels,datasets:[{data:vals,backgroundColor:PIE_COLORS,borderColor:'#161b22',borderWidth:2}]},
+      options:{plugins:{legend:{position:'bottom',labels:{color:'#8b96a3',font:{family:'IBM Plex Sans Thai',size:12},padding:10}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${baht(c.parsed)}`}}},maintainAspectRatio:false,cutout:'58%'}
+    });
+  }
+  // bar: 6 เดือน รับ vs จ่าย(รวมผ่อน)
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date(_now.getFullYear(),_now.getMonth()-i,1);months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}
+  const inArr=months.map(mk=>txns.filter(x=>x.type==='income'&&mkey(x.tx_date)===mk).reduce((a,x)=>a+Number(x.amount),0));
+  const outArr=months.map(mk=>{
+    const tx=txns.filter(x=>x.type==='expense'&&mkey(x.tx_date)===mk).reduce((a,x)=>a+Number(x.amount),0);
+    const pay=payments.filter(p=>mkey(p.pay_date)===mk).reduce((a,p)=>a+Number(p.amount),0);
+    return tx+pay;
+  });
+  const labelsM=months.map(mk=>new Date(mk+'-01T00:00:00').toLocaleDateString('th-TH',{month:'short'}));
+  if(barChart)barChart.destroy();
+  barChart=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels:labelsM,datasets:[
+      {label:'รายรับ',data:inArr,backgroundColor:'#3fb950',borderRadius:5},
+      {label:'รายจ่าย',data:outArr,backgroundColor:'#f85149',borderRadius:5}]},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8b96a3',font:{family:'IBM Plex Sans Thai'}}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${baht(c.parsed.y)}`}}},
+      scales:{x:{ticks:{color:'#8b96a3',font:{family:'IBM Plex Sans Thai'}},grid:{display:false}},
+        y:{ticks:{color:'#5b6571',callback:v=>v>=1000?(v/1000)+'k':v},grid:{color:'#2a323d'}}}}
+  });
+}
+
+// -------- DUE (แจ้งเตือนล่วงหน้า 5 วัน) --------
+function checkDueDates(){
+  const todayDay=new Date().getDate();
+  const dueToday=[],dueSoon=[];
+  debts.filter(d=>d.status==='active'&&d.due_day).forEach(d=>{
+    const diff=d.due_day-todayDay;
+    if(diff===0)dueToday.push(d);
+    else if(diff>0&&diff<=5)dueSoon.push({d,diff});
+  });
+  const db=document.getElementById('dueBanner'),sbn=document.getElementById('soonBanner');
+  if(dueToday.length){db.innerHTML='🔴 <b>ครบกำหนดชำระวันนี้!</b> '+dueToday.map(d=>d.name).join(', ');db.classList.add('on');}
+  else db.classList.remove('on');
+  if(dueSoon.length){sbn.innerHTML='🟡 <b>ใกล้ถึงวันชำระ (ภายใน 5 วัน):</b> '+dueSoon.map(x=>`${x.d.name} — อีก ${x.diff} วัน`).join(', ');sbn.classList.add('on');}
+  else sbn.classList.remove('on');
+  if(('Notification' in window)&&Notification.permission==='granted'){
+    dueToday.forEach(d=>new Notification('💸 ครบกำหนดชำระวันนี้',{body:d.name+(d.lender?' · '+d.lender:'')}));
+    dueSoon.forEach(x=>new Notification('🔔 ใกล้ถึงวันชำระหนี้',{body:`${x.d.name} — อีก ${x.diff} วัน (วันที่ ${x.d.due_day})`}));
+  }
+}
+async function requestNotif(){
+  if(!('Notification' in window)) return toast('เบราว์เซอร์ไม่รองรับการแจ้งเตือน');
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){document.getElementById('notifBtn').classList.add('on');document.getElementById('notifBtn').textContent='🔔 เปิดแล้ว';toast('เปิดการแจ้งเตือนแล้ว ✓');checkDueDates();}
+  else toast('ไม่ได้รับอนุญาตแจ้งเตือน');
+}
+function initNotifBtn(){if(('Notification' in window)&&Notification.permission==='granted'){document.getElementById('notifBtn').classList.add('on');document.getElementById('notifBtn').textContent='🔔 เปิดแล้ว';}}
+
+// -------- DEBTS --------
 function renderDebts(){
   const wrap=document.getElementById('debtList');
-  if(!debts.length){ wrap.innerHTML='<div class="empty">ยังไม่มีรายการหนี้</div>'; return; }
-  const today=new Date(); const todayDay=today.getDate();
+  if(!debts.length){wrap.innerHTML='<div class="empty">ยังไม่มีรายการหนี้</div>';return;}
+  const todayDay=new Date().getDate();
   wrap.innerHTML=debts.map(d=>{
     const pays=payments.filter(p=>p.debt_id===d.id).sort((a,b)=>new Date(a.pay_date)-new Date(b.pay_date));
     const paid=pays.reduce((s,p)=>s+Number(p.amount),0);
     const remain=Math.max(0,Number(d.principal)-paid);
     const pct=Math.min(100,(paid/Number(d.principal))*100)||0;
-    const done=pays.length, total=d.installments||0;
+    const done=pays.length,total=d.installments||0;
     const isClosed=d.status==='closed'||remain<=0;
-    // วันครบกำหนด
-    let dueBadge='', cardClass='';
-    if(!isClosed&&d.due_day){
-      const diff=d.due_day-todayDay;
-      if(diff===0){ dueBadge='<span class="badge due">ครบกำหนดวันนี้!</span>'; cardClass='due-today'; }
-      else if(diff>0&&diff<=5){ dueBadge=`<span class="badge soon">อีก ${diff} วัน</span>`; cardClass='due-soon'; }
-    }
-    const log=pays.length?`<div class="pay-log">${pays.map((p,i)=>
-      `<div class="pl"><span>งวดที่ ${p.installment_no||i+1} · ${fmtDate(p.pay_date)}</span><b class="pos">${baht(p.amount)}</b></div>`).join('')}</div>`:'';
-    return `<div class="debt-card ${cardClass}">
-      <div class="debt-head">
-        <div>
-          <div class="debt-name">${d.name} ${dueBadge}</div>
-          <div class="debt-lender">${d.lender||''}${d.due_day?` · ครบกำหนดทุกวันที่ ${d.due_day}`:''}</div>
-        </div>
-        <span class="badge ${isClosed?'closed':''}">${isClosed?'ปิดยอดแล้ว':'ผ่อนอยู่'}</span>
-      </div>
+    let dueBadge='',cls='';
+    if(!isClosed&&d.due_day){const diff=d.due_day-todayDay;
+      if(diff===0){dueBadge='<span class="badge due">ครบกำหนดวันนี้!</span>';cls='due-today';}
+      else if(diff>0&&diff<=5){dueBadge=`<span class="badge soon">อีก ${diff} วัน</span>`;cls='due-soon';}}
+    const log=pays.length?`<div class="pay-log">${pays.map((p,i)=>`<div class="pl"><span>งวดที่ ${p.installment_no||i+1} · ${fmtDate(p.pay_date)}</span><b class="pos">${baht(p.amount)}</b></div>`).join('')}</div>`:'';
+    return `<div class="dcard ${cls}">
+      <div class="dhead"><div><div class="dname">${d.name} ${dueBadge}</div>
+      <div class="dlender">${d.lender||''}${d.due_day?` · ครบกำหนดทุกวันที่ ${d.due_day}`:''}</div></div>
+      <span class="badge ${isClosed?'closed':''}">${isClosed?'ปิดยอดแล้ว':'ผ่อนอยู่'}</span></div>
       <div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="debt-stats">
-        <span>จ่ายแล้ว <b class="pos">${baht(paid)}</b>${total?` · ${done}/${total} งวด`:` · ${done} ครั้ง`}</span>
-        <span>คงเหลือ <b class="debt-c">${baht(remain)}</b></span>
-      </div>
-      <div class="debt-act">
-        ${isClosed?'':`<button class="pay" onclick="openPay(${d.id})">+ ผ่อนชำระ</button>`}
-        <button class="edit-btn" onclick="openDebtEdit(${d.id})">✏️ แก้ไข</button>
-        <button onclick="delDebt(${d.id})">ลบ</button>
-      </div>
-      ${log}
-    </div>`;
+      <div class="dstats"><span>จ่ายแล้ว <b class="pos">${baht(paid)}</b>${total?` · ${done}/${total} งวด`:` · ${done} ครั้ง`}</span>
+      <span>คงเหลือ <b class="debt-c">${baht(remain)}</b></span></div>
+      <div class="dact">${isClosed?'':`<button class="pay" onclick="openPay(${d.id})">+ ผ่อนชำระ</button>`}
+      <button class="edit-btn" onclick="openDebtEdit(${d.id})">✏️ แก้ไข</button>
+      <button onclick="delDebt(${d.id})">ลบ</button></div>${log}</div>`;
   }).join('');
 }
+function openDebtForm(){editDebtId=null;document.getElementById('debtModalTitle').textContent='เพิ่มหนี้ใหม่';document.getElementById('debtSaveBtn').textContent='บันทึกหนี้';['dName','dLender','dPrincipal','dInst','dDueDay'].forEach(i=>document.getElementById(i).value='');openModal('mDebt');}
+function openDebtEdit(id){editDebtId=id;const d=debts.find(x=>x.id===id);document.getElementById('debtModalTitle').textContent='แก้ไขหนี้';document.getElementById('debtSaveBtn').textContent='บันทึกการแก้ไข';document.getElementById('dName').value=d.name||'';document.getElementById('dLender').value=d.lender||'';document.getElementById('dPrincipal').value=d.principal||'';document.getElementById('dInst').value=d.installments||'';document.getElementById('dDueDay').value=d.due_day||'';openModal('mDebt');}
+async function saveDebt(){
+  if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
+  const name=document.getElementById('dName').value.trim();
+  const principal=parseFloat(document.getElementById('dPrincipal').value);
+  if(!name) return toast('กรอกชื่อหนี้');
+  if(!principal||principal<=0) return toast('กรอกยอดเงินต้น');
+  const payload={name,lender:document.getElementById('dLender').value||null,principal,installments:parseInt(document.getElementById('dInst').value)||0,due_day:parseInt(document.getElementById('dDueDay').value)||null};
+  let error;
+  if(editDebtId)({error}=await sb.from('debts').update(payload).eq('id',editDebtId));
+  else({error}=await sb.from('debts').insert(payload));
+  if(error) return toast('ผิดพลาด: '+error.message);
+  closeModal('mDebt');toast(editDebtId?'แก้ไขแล้ว ✓':'เพิ่มหนี้แล้ว ✓');editDebtId=null;await loadAll();
+}
+async function delDebt(id){if(!confirm('ลบหนี้นี้และประวัติการผ่อนทั้งหมด?'))return;await sb.from('debts').delete().eq('id',id);toast('ลบแล้ว');await loadAll();}
+function openPay(id){curDebtId=id;const d=debts.find(x=>x.id===id);const done=payments.filter(p=>p.debt_id===id).length;document.getElementById('payTitle').textContent='ผ่อนชำระ · '+d.name;document.getElementById('payAmount').value='';document.getElementById('payNo').value=done+1;document.getElementById('payDate').value=todayStr();openModal('mPay');}
+async function savePayment(){
+  const amount=parseFloat(document.getElementById('payAmount').value);
+  if(!amount||amount<=0) return toast('กรอกจำนวนเงิน');
+  const {error}=await sb.from('debt_payments').insert({debt_id:curDebtId,amount,pay_date:document.getElementById('payDate').value||todayStr(),installment_no:parseInt(document.getElementById('payNo').value)||null});
+  if(error) return toast('ผิดพลาด: '+error.message);
+  const d=debts.find(x=>x.id===curDebtId);
+  const paid=payments.filter(p=>p.debt_id===curDebtId).reduce((s,p)=>s+Number(p.amount),0)+amount;
+  if(paid>=Number(d.principal)) await sb.from('debts').update({status:'closed'}).eq('id',curDebtId);
+  closeModal('mPay');toast('บันทึกการชำระ ✓ (นับเป็นรายจ่าย)');await loadAll();
+}
 
-// -------- ACTIONS --------
+// -------- SAVINGS --------
+function renderGoals(){
+  const wrap=document.getElementById('goalList');
+  if(!goals.length){wrap.innerHTML='<div class="empty">ยังไม่มีเป้าหมายการออม</div>';return;}
+  wrap.innerHTML=goals.map(g=>{
+    const deps=deposits.filter(x=>x.goal_id===g.id).sort((a,b)=>new Date(a.deposit_date)-new Date(b.deposit_date));
+    const saved=deps.reduce((s,x)=>s+Number(x.amount),0);
+    const remain=Math.max(0,Number(g.target)-saved);
+    const pct=Math.min(100,(saved/Number(g.target))*100)||0;
+    const done=saved>=Number(g.target);
+    const log=deps.length?`<div class="pay-log">${deps.map(x=>`<div class="pl"><span>${fmtDate(x.deposit_date)}</span><b class="save-c">${baht(x.amount)}</b></div>`).join('')}</div>`:'';
+    return `<div class="dcard ${done?'goal-done':''}">
+      <div class="dhead"><div><div class="dname">🐷 ${g.name}</div>
+      <div class="dlender">เป้าหมาย ${baht(g.target)}</div></div>
+      <span class="badge save">${done?'สำเร็จ! 🎉':pct.toFixed(0)+'%'}</span></div>
+      <div class="bar save"><i style="width:${pct}%"></i></div>
+      <div class="dstats"><span>ออมแล้ว <b class="save-c">${baht(saved)}</b></span>
+      <span>เหลืออีก <b>${baht(remain)}</b></span></div>
+      <div class="dact"><button class="dep" onclick="openDeposit(${g.id})">+ ฝากเงิน</button>
+      <button class="edit-btn" onclick="openGoalEdit(${g.id})">✏️ แก้ไข</button>
+      <button onclick="delGoal(${g.id})">ลบ</button></div>${log}</div>`;
+  }).join('');
+}
+function openGoalForm(){editGoalId=null;document.getElementById('goalModalTitle').textContent='เพิ่มเป้าหมายการออม';document.getElementById('goalSaveBtn').textContent='บันทึกเป้าหมาย';document.getElementById('gName').value='';document.getElementById('gTarget').value='';openModal('mGoal');}
+function openGoalEdit(id){editGoalId=id;const g=goals.find(x=>x.id===id);document.getElementById('goalModalTitle').textContent='แก้ไขเป้าหมาย';document.getElementById('goalSaveBtn').textContent='บันทึกการแก้ไข';document.getElementById('gName').value=g.name||'';document.getElementById('gTarget').value=g.target||'';openModal('mGoal');}
+async function saveGoal(){
+  if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
+  const name=document.getElementById('gName').value.trim();
+  const target=parseFloat(document.getElementById('gTarget').value);
+  if(!name) return toast('กรอกชื่อเป้าหมาย');
+  if(!target||target<=0) return toast('กรอกยอดเป้าหมาย');
+  let error;
+  if(editGoalId)({error}=await sb.from('savings_goals').update({name,target}).eq('id',editGoalId));
+  else({error}=await sb.from('savings_goals').insert({name,target}));
+  if(error) return toast('ผิดพลาด: '+error.message);
+  closeModal('mGoal');toast(editGoalId?'แก้ไขแล้ว ✓':'เพิ่มเป้าหมายแล้ว ✓');editGoalId=null;await loadAll();
+}
+async function delGoal(id){if(!confirm('ลบเป้าหมายนี้และประวัติการออม?'))return;await sb.from('savings_goals').delete().eq('id',id);toast('ลบแล้ว');await loadAll();}
+function openDeposit(id){curGoalId=id;const g=goals.find(x=>x.id===id);document.getElementById('depTitle').textContent='ฝากเงินออม · '+g.name;document.getElementById('depAmount').value='';document.getElementById('depDate').value=todayStr();openModal('mDep');}
+async function saveDeposit(){
+  const amount=parseFloat(document.getElementById('depAmount').value);
+  if(!amount||amount<=0) return toast('กรอกจำนวนเงิน');
+  const {error}=await sb.from('savings_deposits').insert({goal_id:curGoalId,amount,deposit_date:document.getElementById('depDate').value||todayStr()});
+  if(error) return toast('ผิดพลาด: '+error.message);
+  closeModal('mDep');toast('บันทึกการออม ✓');await loadAll();
+}
+
+// -------- TX actions --------
 async function saveTx(){
   if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
   const amount=parseFloat(document.getElementById('txAmount').value);
@@ -472,104 +669,18 @@ async function saveTx(){
   const catVal=document.getElementById('txCat').value;
   const catId=(catVal&&catVal!=='__new__')?parseInt(catVal):null;
   const cat=categories.find(c=>c.id===catId);
-  const {error}=await sb.from('transactions').insert({
-    type:txType, amount,
-    title:title||null,
-    category_id:catId, category_name:cat?cat.name:null,
-    note:document.getElementById('txNote').value||null,
-    tx_date:document.getElementById('txDate').value||new Date().toISOString().slice(0,10)
-  });
+  const {error}=await sb.from('transactions').insert({type:txType,amount,title:title||null,category_id:catId,category_name:cat?cat.name:null,note:document.getElementById('txNote').value||null,tx_date:document.getElementById('txDate').value||todayStr()});
   if(error) return toast('ผิดพลาด: '+error.message);
-  document.getElementById('txAmount').value='';
-  document.getElementById('txTitle').value='';
-  document.getElementById('txNote').value='';
-  toast('บันทึกแล้ว ✓');
-  await loadAll();
+  document.getElementById('txAmount').value='';document.getElementById('txTitle').value='';document.getElementById('txNote').value='';
+  toast('บันทึกรายการสำเร็จแล้ว ✓');await loadAll();
   document.querySelector('.tabs button[data-v="home"]').click();
 }
-async function delTx(id){
-  if(!confirm('ลบรายการนี้?')) return;
-  await sb.from('transactions').delete().eq('id',id);
-  toast('ลบแล้ว'); await loadAll();
-}
-
-// -------- DEBT --------
-function openDebtForm(){
-  editDebtId=null;
-  document.getElementById('debtModalTitle').textContent='เพิ่มหนี้ใหม่';
-  document.getElementById('debtSaveBtn').textContent='บันทึกหนี้';
-  ['dName','dLender','dPrincipal','dInst','dDueDay'].forEach(i=>document.getElementById(i).value='');
-  openModal('mDebt');
-}
-function openDebtEdit(id){
-  editDebtId=id;
-  const d=debts.find(x=>x.id===id);
-  document.getElementById('debtModalTitle').textContent='แก้ไขหนี้';
-  document.getElementById('debtSaveBtn').textContent='บันทึกการแก้ไข';
-  document.getElementById('dName').value=d.name||'';
-  document.getElementById('dLender').value=d.lender||'';
-  document.getElementById('dPrincipal').value=d.principal||'';
-  document.getElementById('dInst').value=d.installments||'';
-  document.getElementById('dDueDay').value=d.due_day||'';
-  openModal('mDebt');
-}
-async function saveDebt(){
-  if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
-  const name=document.getElementById('dName').value.trim();
-  const principal=parseFloat(document.getElementById('dPrincipal').value);
-  if(!name) return toast('กรอกชื่อหนี้');
-  if(!principal||principal<=0) return toast('กรอกยอดเงินต้น');
-  const payload={
-    name, lender:document.getElementById('dLender').value||null,
-    principal, installments:parseInt(document.getElementById('dInst').value)||0,
-    due_day:parseInt(document.getElementById('dDueDay').value)||null
-  };
-  let error;
-  if(editDebtId){
-    ({error}=await sb.from('debts').update(payload).eq('id',editDebtId));
-  } else {
-    ({error}=await sb.from('debts').insert(payload));
-  }
-  if(error) return toast('ผิดพลาด: '+error.message);
-  closeModal('mDebt');
-  toast(editDebtId?'แก้ไขแล้ว ✓':'เพิ่มหนี้แล้ว ✓');
-  editDebtId=null;
-  await loadAll();
-}
-async function delDebt(id){
-  if(!confirm('ลบหนี้นี้และประวัติการผ่อนทั้งหมด?')) return;
-  await sb.from('debts').delete().eq('id',id);
-  toast('ลบแล้ว'); await loadAll();
-}
-
-function openPay(id){
-  curDebtId=id;
-  const d=debts.find(x=>x.id===id);
-  const done=payments.filter(p=>p.debt_id===id).length;
-  document.getElementById('payTitle').textContent='ผ่อนชำระ · '+d.name;
-  document.getElementById('payAmount').value='';
-  document.getElementById('payNo').value=done+1;
-  document.getElementById('payDate').value=new Date().toISOString().slice(0,10);
-  openModal('mPay');
-}
-async function savePayment(){
-  const amount=parseFloat(document.getElementById('payAmount').value);
-  if(!amount||amount<=0) return toast('กรอกจำนวนเงิน');
-  const {error}=await sb.from('debt_payments').insert({
-    debt_id:curDebtId, amount,
-    pay_date:document.getElementById('payDate').value||new Date().toISOString().slice(0,10),
-    installment_no:parseInt(document.getElementById('payNo').value)||null
-  });
-  if(error) return toast('ผิดพลาด: '+error.message);
-  const d=debts.find(x=>x.id===curDebtId);
-  const paid=payments.filter(p=>p.debt_id===curDebtId).reduce((s,p)=>s+Number(p.amount),0)+amount;
-  if(paid>=Number(d.principal)) await sb.from('debts').update({status:'closed'}).eq('id',curDebtId);
-  closeModal('mPay'); toast('บันทึกการชำระ ✓'); await loadAll();
-}
+async function delTx(id){if(!confirm('ลบรายการนี้?'))return;await sb.from('transactions').delete().eq('id',id);toast('ลบแล้ว');await loadAll();}
 
 // init
-document.getElementById('txDate').value=new Date().toISOString().slice(0,10);
-['mDebt','mPay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(e.target.id===id) closeModal(id); }));
+document.getElementById('txDate').value=todayStr();
+document.getElementById('monthLabel').textContent=monthLabelText();
+['mDebt','mPay','mGoal','mDep'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)closeModal(id);}));
 initNotifBtn();
 loadAll();
 </script>
