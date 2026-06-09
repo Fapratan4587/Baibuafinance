@@ -289,6 +289,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 
   <!-- DEBT -->
   <div class="view" id="v-debt">
+    <div class="card" id="debtSummaryCard" style="display:none">
+      <h3>ยอดที่ต้องจ่ายเดือนนี้ <span style="font-weight:500;color:var(--faint);font-size:12px" id="debtSumMonth"></span></h3>
+      <div class="bal" id="debtDueTotal" style="font-size:30px;color:var(--debt)">฿0</div>
+      <div class="row" style="display:flex;gap:10px;margin-top:14px">
+        <div class="mini" style="flex:1;background:var(--panel2);border-radius:10px;padding:11px 13px"><div class="t pos" style="font-size:11.5px;color:var(--muted)">จ่ายแล้วเดือนนี้</div><div class="v pos" id="debtPaidMonth" style="font-family:'Sora',sans-serif;font-weight:700;font-size:17px;margin-top:3px">฿0</div></div>
+        <div class="mini" style="flex:1;background:var(--panel2);border-radius:10px;padding:11px 13px"><div class="t neg" style="font-size:11.5px;color:var(--muted)">คงค้างเดือนนี้</div><div class="v neg" id="debtRemainMonth" style="font-family:'Sora',sans-serif;font-weight:700;font-size:17px;margin-top:3px">฿0</div></div>
+      </div>
+    </div>
     <div class="card">
       <h3>หนี้สิน <button class="badge" style="border:0;cursor:pointer;font-size:12px;padding:5px 11px" onclick="openDebtForm()">+ เพิ่มหนี้</button></h3>
       <div id="debtList"><div class="empty">ยังไม่มีรายการหนี้</div></div>
@@ -737,7 +745,34 @@ function updateIntPreview(){
 }
 ['dPrincipal','dInst','dIntRate'].forEach(id=>document.addEventListener('input',e=>{if(e.target.id===id)updateIntPreview();}));
 
+function renderDebtSummary(){
+  const card=document.getElementById('debtSummaryCard');
+  const active=debts.filter(d=>{
+    const c=computeDebt(d);const denom=c.total||Number(d.principal);
+    const paid=payments.filter(p=>p.debt_id===d.id).reduce((s,p)=>s+Number(p.amount),0);
+    return d.status!=='closed' && (denom-paid)>0.5;
+  });
+  if(!active.length){card.style.display='none';return;}
+  let dueTotal=0,remainTotal=0;
+  active.forEach(d=>{
+    const c=computeDebt(d);const denom=c.total||Number(d.principal);
+    const paidAll=payments.filter(p=>p.debt_id===d.id).reduce((s,p)=>s+Number(p.amount),0);
+    const remainAll=Math.max(0,denom-paidAll);
+    let monthlyDue=c.perInst>0?c.perInst:remainAll;
+    monthlyDue=Math.min(monthlyDue,remainAll);
+    const paidThisMonth=payments.filter(p=>p.debt_id===d.id&&mkey(p.pay_date)===curMonth).reduce((s,p)=>s+Number(p.amount),0);
+    dueTotal+=monthlyDue;
+    remainTotal+=Math.max(0,monthlyDue-paidThisMonth);
+  });
+  const paidMonth=payments.filter(p=>mkey(p.pay_date)===curMonth).reduce((s,p)=>s+Number(p.amount),0);
+  card.style.display='block';
+  document.getElementById('debtSumMonth').textContent='('+monthLabelText()+')';
+  document.getElementById('debtDueTotal').textContent=baht(dueTotal);
+  document.getElementById('debtPaidMonth').textContent=baht(paidMonth);
+  document.getElementById('debtRemainMonth').textContent=baht(remainTotal);
+}
 function renderDebts(){
+  renderDebtSummary();
   const wrap=document.getElementById('debtList');
   if(!debts.length){wrap.innerHTML='<div class="empty">ยังไม่มีรายการหนี้</div>';return;}
   const todayDay=new Date().getDate();
