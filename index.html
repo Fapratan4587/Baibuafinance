@@ -15,19 +15,18 @@
   --neg:#f85149; --neg-dim:#3d1d1c;
   --debt:#d29922; --debt-dim:#3a2e10;
   --accent:#58a6ff; --accent-dim:#13283f;
+  --warn:#ff9500; --warn-dim:#3a2800;
   --r:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Thai',sans-serif;font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
 
-/* header */
 header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--bg) 70%,transparent);padding:18px 0 10px}
 .brand{font-family:'Sora',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
 .brand .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 14px var(--accent)}
 .sub{color:var(--faint);font-size:12.5px;margin-top:2px}
 
-/* balance hero */
 .hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:14px;position:relative;overflow:hidden}
 .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,var(--accent-dim),transparent 70%)}
 .hero .lab{color:var(--muted);font-size:13px}
@@ -38,7 +37,6 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--
 .hero .mini .v{font-family:'Sora',sans-serif;font-weight:700;font-size:18px;margin-top:3px}
 .pos{color:var(--pos)} .neg{color:var(--neg)} .debt-c{color:var(--debt)}
 
-/* tabs */
 .tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px;margin-top:14px;position:sticky;top:78px;z-index:15}
 .tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:600;padding:9px 4px;border-radius:8px;cursor:pointer;transition:.15s}
 .tabs button.on{background:var(--panel2);color:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.04)}
@@ -47,7 +45,6 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--
 .view.on{display:block;animation:fade .25s}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-/* cards / list */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
 .card h3{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
 .item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -61,7 +58,6 @@ header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--
 .del:hover{color:var(--neg);background:var(--neg-dim)}
 .empty{text-align:center;color:var(--faint);font-size:13.5px;padding:26px 0}
 
-/* form */
 .seg{display:flex;gap:8px;margin-bottom:14px}
 .seg button{flex:1;padding:11px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:10px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer}
 .seg button.inc.on{background:var(--pos-dim);border-color:var(--pos);color:var(--pos)}
@@ -75,8 +71,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 .btn:active{transform:scale(.99)}
 .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
 
+/* custom category row */
+.new-cat-row{display:none;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:11px 13px;margin-bottom:13px;gap:8px;align-items:center;flex-wrap:wrap}
+.new-cat-row.on{display:flex}
+.new-cat-row input{margin-bottom:0;flex:1;min-width:120px}
+.new-cat-row select{margin-bottom:0;width:auto}
+
 /* debt */
 .debt-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:13px}
+.debt-card.due-soon{border-color:var(--warn)}
+.debt-card.due-today{border-color:var(--neg);box-shadow:0 0 0 1px var(--neg-dim)}
 .debt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .debt-name{font-family:'Sora',sans-serif;font-weight:700;font-size:16px}
 .debt-lender{font-size:12px;color:var(--faint)}
@@ -87,38 +91,58 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 .debt-act{display:flex;gap:8px;margin-top:13px}
 .debt-act button{flex:1;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .debt-act .pay{background:var(--debt-dim);border-color:var(--debt);color:var(--debt)}
+.debt-act .edit-btn{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .badge{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--pos-dim);color:var(--pos);font-weight:600}
 .badge.closed{background:var(--panel2);color:var(--faint)}
+.badge.due{background:var(--neg-dim);color:var(--neg)}
+.badge.soon{background:var(--warn-dim);color:var(--warn)}
 .pay-log{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
 .pay-log .pl{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:var(--muted)}
 
-/* modal */
+/* due alert banner */
+.due-banner{background:var(--neg-dim);border:1px solid var(--neg);border-radius:12px;padding:13px 15px;font-size:13px;margin-bottom:14px;display:none}
+.due-banner.on{display:block}
+.due-banner b{color:var(--neg)}
+.soon-banner{background:var(--warn-dim);border:1px solid var(--warn);border-radius:12px;padding:13px 15px;font-size:13px;margin-bottom:14px;display:none}
+.soon-banner.on{display:block}
+.soon-banner b{color:var(--warn)}
+
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:50;backdrop-filter:blur(2px)}
 .modal.on{display:flex}
-.sheet{background:var(--panel);width:100%;max-width:760px;margin:0 auto;border-radius:18px 18px 0 0;border:1px solid var(--line);padding:20px 18px calc(20px + env(safe-area-inset-bottom));animation:up .25s}
+.sheet{background:var(--panel);width:100%;max-width:760px;margin:0 auto;border-radius:18px 18px 0 0;border:1px solid var(--line);padding:20px 18px calc(20px + env(safe-area-inset-bottom));animation:up .25s;max-height:90vh;overflow-y:auto}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
 .sheet h3{font-family:'Sora',sans-serif;font-size:16px;margin-bottom:16px}
 
-/* setup banner */
 .setup{background:var(--debt-dim);border:1px solid var(--debt);color:#f0c674;border-radius:12px;padding:13px 15px;font-size:13px;margin-top:14px}
 .setup b{color:#ffd866}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:.25s;pointer-events:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1;bottom:30px}
 .filter{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap}
 .filter button{padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-family:inherit;font-size:12.5px;cursor:pointer}
 .filter button.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.notif-btn{font-size:12px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;font-family:inherit}
+.notif-btn.on{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand"><span class="dot"></span>บัญชีของฉัน</div>
-    <div class="sub">รายรับ · รายจ่าย · หนี้สิน</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div class="brand"><span class="dot"></span>บัญชีของฉัน</div>
+        <div class="sub">รายรับ · รายจ่าย · หนี้สิน</div>
+      </div>
+      <button class="notif-btn" id="notifBtn" onclick="requestNotif()">🔔 แจ้งเตือน</button>
+    </div>
   </header>
 
   <div id="setupBanner" class="setup" style="display:none">
-    ⚠️ ยังไม่ได้ตั้งค่า <b>Supabase</b> — เปิดไฟล์ <b>index.html</b> แก้ค่า <b>SUPABASE_URL</b> และ <b>SUPABASE_KEY</b> ที่ส่วนบนสุดของ &lt;script&gt; แล้วรัน schema.sql ใน SQL Editor
+    ⚠️ ยังไม่ได้ตั้งค่า <b>Supabase</b> — เปิดไฟล์ <b>index.html</b> แก้ค่า <b>SUPABASE_URL</b> และ <b>SUPABASE_KEY</b>
   </div>
+
+  <!-- แจ้งเตือนวันครบกำหนด -->
+  <div class="due-banner" id="dueBanner"></div>
+  <div class="soon-banner" id="soonBanner"></div>
 
   <div class="hero">
     <div class="lab">ยอดคงเหลือสุทธิ</div>
@@ -159,11 +183,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
       </div>
       <label>จำนวนเงิน (บาท)</label>
       <input class="amount-in" id="txAmount" type="number" inputmode="decimal" placeholder="0.00">
+      <label>ชื่อรายการ (จ่ายอะไร / รับจากอะไร)</label>
+      <input id="txTitle" type="text" placeholder="เช่น ค่าข้าว, เงินเดือน, ค่าน้ำมัน">
       <label>หมวดหมู่</label>
-      <select id="txCat"></select>
+      <select id="txCat" onchange="onCatChange()"></select>
+      <!-- กรอกหมวดใหม่ -->
+      <div class="new-cat-row" id="newCatRow">
+        <input id="newCatName" placeholder="ชื่อหมวดหมู่ใหม่" style="min-width:140px">
+        <input id="newCatIcon" placeholder="Emoji เช่น 🍕" style="width:70px;min-width:0">
+        <select id="newCatType" style="width:auto;min-width:0">
+          <option value="expense">รายจ่าย</option>
+          <option value="income">รายรับ</option>
+        </select>
+        <button onclick="saveNewCat()" style="padding:9px 14px;border-radius:9px;border:0;background:var(--accent);color:#04111f;font-family:inherit;font-weight:700;cursor:pointer;white-space:nowrap">เพิ่ม</button>
+      </div>
       <div class="grid2">
         <div><label>วันที่</label><input id="txDate" type="date"></div>
-        <div><label>หมายเหตุ</label><input id="txNote" type="text" placeholder="(ไม่บังคับ)"></div>
+        <div><label>หมายเหตุเพิ่มเติม</label><input id="txNote" type="text" placeholder="(ไม่บังคับ)"></div>
       </div>
       <button class="btn" onclick="saveTx()">บันทึกรายการ</button>
     </div>
@@ -172,27 +208,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
   <!-- DEBT -->
   <div class="view" id="v-debt">
     <div class="card">
-      <h3>หนี้สิน <button class="badge" style="border:0;cursor:pointer" onclick="openDebtForm()">+ เพิ่มหนี้</button></h3>
+      <h3>หนี้สิน <button class="badge" style="border:0;cursor:pointer;font-size:12px;padding:5px 11px" onclick="openDebtForm()">+ เพิ่มหนี้</button></h3>
       <div id="debtList"><div class="empty">ยังไม่มีรายการหนี้</div></div>
     </div>
   </div>
 </div>
 
-<!-- modal: add debt -->
+<!-- modal: add/edit debt -->
 <div class="modal" id="mDebt">
   <div class="sheet">
-    <h3>เพิ่มหนี้ใหม่</h3>
+    <h3 id="debtModalTitle">เพิ่มหนี้ใหม่</h3>
     <label>ชื่อหนี้</label>
     <input id="dName" placeholder="เช่น ผ่อนรถ, สินเชื่อบ้าน">
     <label>เจ้าหนี้ / ธนาคาร</label>
     <input id="dLender" placeholder="(ไม่บังคับ)">
     <div class="grid2">
       <div><label>ยอดเงินต้น (บาท)</label><input id="dPrincipal" type="number" inputmode="decimal" placeholder="0"></div>
-      <div><label>จำนวนงวด</label><input id="dInst" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label>จำนวนงวดทั้งหมด</label><input id="dInst" type="number" inputmode="numeric" placeholder="0 = ไม่กำหนด"></div>
     </div>
-    <label>วันครบกำหนด (วันที่ของเดือน)</label>
+    <label>วันครบกำหนดชำระ (วันที่ของเดือน เช่น 5 = ทุกวันที่ 5)</label>
     <input id="dDueDay" type="number" inputmode="numeric" placeholder="เช่น 5" min="1" max="31">
-    <button class="btn" onclick="saveDebt()">บันทึกหนี้</button>
+    <button class="btn" id="debtSaveBtn" onclick="saveDebt()">บันทึกหนี้</button>
     <button class="btn ghost" style="margin-top:8px" onclick="closeModal('mDebt')">ยกเลิก</button>
   </div>
 </div>
@@ -216,22 +252,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 
 <script>
 // ===================================================================
-//  ⬇️ ตั้งค่า Supabase ตรงนี้ (เอาจาก Project Settings > API)
-// ===================================================================
 const SUPABASE_URL = "https://hsleqsbiuelvfyyvvedd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzbGVxc2JpdWVsdmZ5eXZ2ZWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODU3NjYsImV4cCI6MjA5NjU2MTc2Nn0.B1d_ZwhluPSw9GnNOprcaTwaLFkbd7fX5GWPd2jhbCA";
 // ===================================================================
 
-const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_KEY.includes("YOUR_");
+const configured = !SUPABASE_URL.includes("YOUR_");
 let sb = null;
-if (configured) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-else document.getElementById('setupBanner').style.display = 'block';
+if(configured) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+else document.getElementById('setupBanner').style.display='block';
 
-let categories = [], txns = [], debts = [], payments = [];
-let txType = 'expense', txFilter = 'all', curDebtId = null;
+let categories=[], txns=[], debts=[], payments=[];
+let txType='expense', txFilter='all', curDebtId=null, editDebtId=null;
 
-const baht = n => '฿' + Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
-const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1900); };
+const baht = n => '฿'+Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
+const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2000); };
 const fmtDate = d => new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
 
 // tabs
@@ -251,29 +285,50 @@ function setTxType(t){
   txType=t;
   document.getElementById('segExp').classList.toggle('on',t==='expense');
   document.getElementById('segInc').classList.toggle('on',t==='income');
+  document.getElementById('newCatType').value=t;
   fillCats();
 }
 function fillCats(){
   const sel=document.getElementById('txCat');
   const list=categories.filter(c=>c.type===txType);
-  sel.innerHTML = list.map(c=>`<option value="${c.id}" data-icon="${c.icon}">${c.icon} ${c.name}</option>`).join('') || '<option>— ไม่มีหมวด —</option>';
+  sel.innerHTML = list.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  sel.innerHTML += '<option value="__new__">➕ เพิ่มหมวดใหม่...</option>';
+  document.getElementById('newCatRow').classList.remove('on');
+}
+function onCatChange(){
+  const v=document.getElementById('txCat').value;
+  document.getElementById('newCatRow').classList.toggle('on', v==='__new__');
+}
+async function saveNewCat(){
+  const name=document.getElementById('newCatName').value.trim();
+  const icon=document.getElementById('newCatIcon').value.trim()||'📦';
+  const type=document.getElementById('newCatType').value;
+  if(!name) return toast('กรอกชื่อหมวด');
+  const {data,error}=await sb.from('categories').insert({name,icon,type}).select().single();
+  if(error) return toast('ผิดพลาด: '+error.message);
+  categories.push(data);
+  document.getElementById('newCatName').value='';
+  document.getElementById('newCatIcon').value='';
+  fillCats();
+  // เลือกหมวดที่เพิ่งสร้าง
+  document.getElementById('txCat').value=data.id;
+  toast('เพิ่มหมวดแล้ว ✓');
 }
 
-function openDebtForm(){ openModal('mDebt'); }
 function openModal(id){ document.getElementById(id).classList.add('on'); }
 function closeModal(id){ document.getElementById(id).classList.remove('on'); }
 
-// ---------- LOAD ----------
+// -------- LOAD --------
 async function loadAll(){
   if(!sb) return;
-  const [c,t,d,p] = await Promise.all([
+  const [c,t,d,p]=await Promise.all([
     sb.from('categories').select('*').order('id'),
     sb.from('transactions').select('*').order('tx_date',{ascending:false}).order('id',{ascending:false}),
     sb.from('debts').select('*').order('created_at',{ascending:false}),
     sb.from('debt_payments').select('*').order('pay_date',{ascending:false}),
   ]);
   categories=c.data||[]; txns=t.data||[]; debts=d.data||[]; payments=p.data||[];
-  fillCats(); renderTx(); renderDebts(); renderSummary();
+  fillCats(); renderTx(); renderDebts(); renderSummary(); checkDueDates();
 }
 
 function renderSummary(){
@@ -281,7 +336,7 @@ function renderSummary(){
   const sumOut=txns.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
   const debtRemain=debts.filter(d=>d.status==='active').reduce((a,d)=>{
     const paid=payments.filter(p=>p.debt_id===d.id).reduce((s,p)=>s+Number(p.amount),0);
-    return a + Math.max(0, Number(d.principal)-paid);
+    return a+Math.max(0,Number(d.principal)-paid);
   },0);
   document.getElementById('sumIn').textContent=baht(sumIn);
   document.getElementById('sumOut').textContent=baht(sumOut);
@@ -289,25 +344,76 @@ function renderSummary(){
   const net=sumIn-sumOut;
   const el=document.getElementById('netBal');
   el.textContent=baht(net);
-  el.style.color = net<0 ? 'var(--neg)' : 'var(--ink)';
+  el.style.color=net<0?'var(--neg)':'var(--ink)';
+}
+
+// -------- DUE DATE CHECK --------
+function checkDueDates(){
+  const today=new Date(); const todayDay=today.getDate();
+  const dueToday=[], dueSoon=[];
+  debts.filter(d=>d.status==='active'&&d.due_day).forEach(d=>{
+    const diff=d.due_day-todayDay;
+    if(diff===0) dueToday.push(d);
+    else if(diff>0&&diff<=5) dueSoon.push({d,diff});
+  });
+  const db=document.getElementById('dueBanner');
+  const sb2=document.getElementById('soonBanner');
+  if(dueToday.length){
+    db.innerHTML='🔴 <b>ครบกำหนดชำระวันนี้!</b> '+dueToday.map(d=>`${d.name}`).join(', ');
+    db.classList.add('on');
+    // push notification
+    if(Notification.permission==='granted'){
+      dueToday.forEach(d=>{
+        new Notification('💸 ครบกำหนดชำระวันนี้',{body:d.name+(d.lender?' · '+d.lender:''),icon:'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4b8.png'});
+      });
+    }
+  } else { db.classList.remove('on'); }
+  if(dueSoon.length){
+    sb2.innerHTML='🟡 <b>ใกล้ถึงวันชำระ:</b> '+dueSoon.map(x=>`${x.d.name} (อีก ${x.diff} วัน)`).join(', ');
+    sb2.classList.add('on');
+  } else { sb2.classList.remove('on'); }
+}
+
+// request notification permission
+async function requestNotif(){
+  if(!('Notification' in window)) return toast('เบราว์เซอร์ไม่รองรับการแจ้งเตือน');
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    document.getElementById('notifBtn').classList.add('on');
+    document.getElementById('notifBtn').textContent='🔔 เปิดแจ้งเตือนแล้ว';
+    toast('เปิดการแจ้งเตือนแล้ว ✓');
+    checkDueDates();
+  } else {
+    toast('ไม่ได้รับอนุญาตแจ้งเตือน');
+  }
+}
+function initNotifBtn(){
+  if(Notification.permission==='granted'){
+    document.getElementById('notifBtn').classList.add('on');
+    document.getElementById('notifBtn').textContent='🔔 เปิดแจ้งเตือนแล้ว';
+  }
 }
 
 function renderTx(){
   const wrap=document.getElementById('txList');
   let list=txns;
   if(txFilter!=='all') list=txns.filter(x=>x.type===txFilter);
-  document.getElementById('txCount').textContent = list.length? `(${list.length})`:'';
+  document.getElementById('txCount').textContent=list.length?`(${list.length})`:'';
   if(!list.length){ wrap.innerHTML='<div class="empty">ยังไม่มีรายการ</div>'; return; }
   wrap.innerHTML=list.map(x=>{
     const cat=categories.find(c=>c.id===x.category_id);
     const icon=cat?cat.icon:(x.type==='income'?'💰':'💸');
-    const name=cat?cat.name:(x.category_name||'-');
+    // แสดงชื่อรายการ (title ก่อน ถ้าไม่มีใช้ category name)
+    const title=x.title||(cat?cat.name:(x.category_name||'-'));
+    const sub=(cat&&x.title)?cat.name:'';
     const sign=x.type==='income'?'+':'-';
     const cls=x.type==='income'?'pos':'neg';
     return `<div class="item">
       <div class="ico">${icon}</div>
-      <div class="info"><div class="nm">${name}${x.note?` · ${x.note}`:''}</div>
-        <div class="meta">${fmtDate(x.tx_date)}</div></div>
+      <div class="info">
+        <div class="nm">${title}${x.note?` · ${x.note}`:''}</div>
+        <div class="meta">${fmtDate(x.tx_date)}${sub?' · '+sub:''}</div>
+      </div>
       <div class="amt ${cls}">${sign}${baht(x.amount).slice(1)}</div>
       <button class="del" onclick="delTx(${x.id})">✕</button>
     </div>`;
@@ -317,6 +423,7 @@ function renderTx(){
 function renderDebts(){
   const wrap=document.getElementById('debtList');
   if(!debts.length){ wrap.innerHTML='<div class="empty">ยังไม่มีรายการหนี้</div>'; return; }
+  const today=new Date(); const todayDay=today.getDate();
   wrap.innerHTML=debts.map(d=>{
     const pays=payments.filter(p=>p.debt_id===d.id).sort((a,b)=>new Date(a.pay_date)-new Date(b.pay_date));
     const paid=pays.reduce((s,p)=>s+Number(p.amount),0);
@@ -324,12 +431,21 @@ function renderDebts(){
     const pct=Math.min(100,(paid/Number(d.principal))*100)||0;
     const done=pays.length, total=d.installments||0;
     const isClosed=d.status==='closed'||remain<=0;
-    const log=pays.length? `<div class="pay-log">${pays.map((p,i)=>
-      `<div class="pl"><span>งวดที่ ${p.installment_no||i+1} · ${fmtDate(p.pay_date)}</span><b class="pos">${baht(p.amount)}</b></div>`).join('')}</div>` : '';
-    return `<div class="debt-card">
+    // วันครบกำหนด
+    let dueBadge='', cardClass='';
+    if(!isClosed&&d.due_day){
+      const diff=d.due_day-todayDay;
+      if(diff===0){ dueBadge='<span class="badge due">ครบกำหนดวันนี้!</span>'; cardClass='due-today'; }
+      else if(diff>0&&diff<=5){ dueBadge=`<span class="badge soon">อีก ${diff} วัน</span>`; cardClass='due-soon'; }
+    }
+    const log=pays.length?`<div class="pay-log">${pays.map((p,i)=>
+      `<div class="pl"><span>งวดที่ ${p.installment_no||i+1} · ${fmtDate(p.pay_date)}</span><b class="pos">${baht(p.amount)}</b></div>`).join('')}</div>`:'';
+    return `<div class="debt-card ${cardClass}">
       <div class="debt-head">
-        <div><div class="debt-name">${d.name}</div>
-        <div class="debt-lender">${d.lender||''}${d.due_day?` · ครบกำหนดทุกวันที่ ${d.due_day}`:''}</div></div>
+        <div>
+          <div class="debt-name">${d.name} ${dueBadge}</div>
+          <div class="debt-lender">${d.lender||''}${d.due_day?` · ครบกำหนดทุกวันที่ ${d.due_day}`:''}</div>
+        </div>
         <span class="badge ${isClosed?'closed':''}">${isClosed?'ปิดยอดแล้ว':'ผ่อนอยู่'}</span>
       </div>
       <div class="bar"><i style="width:${pct}%"></i></div>
@@ -339,6 +455,7 @@ function renderDebts(){
       </div>
       <div class="debt-act">
         ${isClosed?'':`<button class="pay" onclick="openPay(${d.id})">+ ผ่อนชำระ</button>`}
+        <button class="edit-btn" onclick="openDebtEdit(${d.id})">✏️ แก้ไข</button>
         <button onclick="delDebt(${d.id})">ลบ</button>
       </div>
       ${log}
@@ -346,21 +463,25 @@ function renderDebts(){
   }).join('');
 }
 
-// ---------- ACTIONS ----------
+// -------- ACTIONS --------
 async function saveTx(){
   if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
   const amount=parseFloat(document.getElementById('txAmount').value);
   if(!amount||amount<=0) return toast('กรอกจำนวนเงินให้ถูกต้อง');
-  const catId=parseInt(document.getElementById('txCat').value)||null;
+  const title=document.getElementById('txTitle').value.trim();
+  const catVal=document.getElementById('txCat').value;
+  const catId=(catVal&&catVal!=='__new__')?parseInt(catVal):null;
   const cat=categories.find(c=>c.id===catId);
-  const { error } = await sb.from('transactions').insert({
+  const {error}=await sb.from('transactions').insert({
     type:txType, amount,
+    title:title||null,
     category_id:catId, category_name:cat?cat.name:null,
     note:document.getElementById('txNote').value||null,
     tx_date:document.getElementById('txDate').value||new Date().toISOString().slice(0,10)
   });
   if(error) return toast('ผิดพลาด: '+error.message);
   document.getElementById('txAmount').value='';
+  document.getElementById('txTitle').value='';
   document.getElementById('txNote').value='';
   toast('บันทึกแล้ว ✓');
   await loadAll();
@@ -372,20 +493,48 @@ async function delTx(id){
   toast('ลบแล้ว'); await loadAll();
 }
 
+// -------- DEBT --------
+function openDebtForm(){
+  editDebtId=null;
+  document.getElementById('debtModalTitle').textContent='เพิ่มหนี้ใหม่';
+  document.getElementById('debtSaveBtn').textContent='บันทึกหนี้';
+  ['dName','dLender','dPrincipal','dInst','dDueDay'].forEach(i=>document.getElementById(i).value='');
+  openModal('mDebt');
+}
+function openDebtEdit(id){
+  editDebtId=id;
+  const d=debts.find(x=>x.id===id);
+  document.getElementById('debtModalTitle').textContent='แก้ไขหนี้';
+  document.getElementById('debtSaveBtn').textContent='บันทึกการแก้ไข';
+  document.getElementById('dName').value=d.name||'';
+  document.getElementById('dLender').value=d.lender||'';
+  document.getElementById('dPrincipal').value=d.principal||'';
+  document.getElementById('dInst').value=d.installments||'';
+  document.getElementById('dDueDay').value=d.due_day||'';
+  openModal('mDebt');
+}
 async function saveDebt(){
   if(!sb) return toast('ยังไม่ได้ตั้งค่า Supabase');
   const name=document.getElementById('dName').value.trim();
   const principal=parseFloat(document.getElementById('dPrincipal').value);
   if(!name) return toast('กรอกชื่อหนี้');
   if(!principal||principal<=0) return toast('กรอกยอดเงินต้น');
-  const { error } = await sb.from('debts').insert({
+  const payload={
     name, lender:document.getElementById('dLender').value||null,
     principal, installments:parseInt(document.getElementById('dInst').value)||0,
     due_day:parseInt(document.getElementById('dDueDay').value)||null
-  });
+  };
+  let error;
+  if(editDebtId){
+    ({error}=await sb.from('debts').update(payload).eq('id',editDebtId));
+  } else {
+    ({error}=await sb.from('debts').insert(payload));
+  }
   if(error) return toast('ผิดพลาด: '+error.message);
-  ['dName','dLender','dPrincipal','dInst','dDueDay'].forEach(i=>document.getElementById(i).value='');
-  closeModal('mDebt'); toast('เพิ่มหนี้แล้ว ✓'); await loadAll();
+  closeModal('mDebt');
+  toast(editDebtId?'แก้ไขแล้ว ✓':'เพิ่มหนี้แล้ว ✓');
+  editDebtId=null;
+  await loadAll();
 }
 async function delDebt(id){
   if(!confirm('ลบหนี้นี้และประวัติการผ่อนทั้งหมด?')) return;
@@ -406,13 +555,12 @@ function openPay(id){
 async function savePayment(){
   const amount=parseFloat(document.getElementById('payAmount').value);
   if(!amount||amount<=0) return toast('กรอกจำนวนเงิน');
-  const { error } = await sb.from('debt_payments').insert({
+  const {error}=await sb.from('debt_payments').insert({
     debt_id:curDebtId, amount,
     pay_date:document.getElementById('payDate').value||new Date().toISOString().slice(0,10),
     installment_no:parseInt(document.getElementById('payNo').value)||null
   });
   if(error) return toast('ผิดพลาด: '+error.message);
-  // auto-close ถ้าจ่ายครบ
   const d=debts.find(x=>x.id===curDebtId);
   const paid=payments.filter(p=>p.debt_id===curDebtId).reduce((s,p)=>s+Number(p.amount),0)+amount;
   if(paid>=Number(d.principal)) await sb.from('debts').update({status:'closed'}).eq('id',curDebtId);
@@ -421,7 +569,8 @@ async function savePayment(){
 
 // init
 document.getElementById('txDate').value=new Date().toISOString().slice(0,10);
-[ 'mDebt','mPay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(e.target.id===id) closeModal(id); }));
+['mDebt','mPay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{ if(e.target.id===id) closeModal(id); }));
+initNotifBtn();
 loadAll();
 </script>
 </body>
