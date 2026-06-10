@@ -224,7 +224,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
   <!-- HOME -->
   <div class="view on" id="v-home">
     <div class="card">
-      <h3>สุขภาพการเงิน 💪</h3>
+      <h3>สุขภาพการเงิน 💪 <span style="font-weight:500;color:var(--faint);font-size:11px">(สะสมทุกเดือน)</span></h3>
       <div class="health">
         <div><div class="big" id="hfMonths">–</div></div>
         <div class="desc" id="hfDesc">เงินสำรองใช้ได้กี่เดือนหากขาดรายได้</div>
@@ -433,7 +433,8 @@ let periodMode='month',pieChart=null,barChart=null;
 const _now=new Date();
 let curMonth=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');
 
-const baht=n=>'฿'+Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
+const baht=n=>'฿\u2009'+Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
+const bahtNum=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
 const fmtDate=d=>new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
 const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);};
 const mkey=d=>(''+d).slice(0,7);
@@ -609,7 +610,7 @@ function renderHealth(){
   const m=liquid/avg;
   elN.textContent=(m<0?'0':m.toFixed(1))+' เดือน';
   elN.style.color=m>=6?'var(--pos)':m>=3?'var(--warn)':'var(--neg)';
-  elD.innerHTML=`เงินคงเหลือ <b>${baht(liquid)}</b> ÷ รายจ่ายเฉลี่ย <b>${baht(avg)}</b>/เดือน<br>`+
+  elD.innerHTML=`สินทรัพย์รวมสะสม <b>${baht(liquid)}</b> ÷ รายจ่ายเฉลี่ย <b>${baht(avg)}</b>/เดือน<br>`+
     (m>=6?'สุขภาพการเงินแข็งแรงมาก 💪':m>=3?'พอใช้ได้ ควรออมเพิ่ม':'เงินสำรองน้อย ควรเริ่มออมด่วน');
 }
 
@@ -617,7 +618,7 @@ function renderHealth(){
 function renderBudgets(){
   const wrap=document.getElementById('budgetList');
   if(periodMode!=='month'){wrap.innerHTML='<div class="empty">ดูงบได้ในโหมดรายเดือน</div>';return;}
-  if(!budgets.length){wrap.innerHTML='<div class="empty">ยังไม่ได้ตั้งงบประมาณ</div>';return;}
+  if(!budgets.length){wrap.innerHTML='<div class="empty" style="padding:18px 10px"><div style="font-size:30px;margin-bottom:6px">🎯</div><div style="color:var(--muted);font-size:13px;margin-bottom:12px">ตั้งงบประมาณก้อนแรก เพื่อควบคุมค่าใช้จ่ายรายเดือนให้มีประสิทธิภาพยิ่งขึ้น</div><button class="btn sm" style="background:var(--accent);color:#fff;padding:10px 20px" onclick="openBudget()">+ ตั้งงบก้อนแรก</button></div>';return;}
   wrap.innerHTML=budgets.map(b=>{
     const cat=categories.find(c=>c.id===b.category_id);
     if(!cat) return '';
