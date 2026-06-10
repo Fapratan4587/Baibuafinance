@@ -223,12 +223,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 
   <!-- HOME -->
   <div class="view on" id="v-home">
-    <div class="card">
-      <h3>สุขภาพการเงิน 💪 <span style="font-weight:500;color:var(--faint);font-size:11px">(สะสมทุกเดือน)</span></h3>
+    <div class="card" style="cursor:pointer" onclick="toggleHealthDetail()">
+      <h3>สุขภาพการเงิน 💪 <span style="font-weight:500;color:var(--faint);font-size:11px" id="hfToggle">(แตะดูที่มา ▾)</span></h3>
       <div class="health">
         <div><div class="big" id="hfMonths">–</div></div>
         <div class="desc" id="hfDesc">เงินสำรองใช้ได้กี่เดือนหากขาดรายได้</div>
       </div>
+      <div id="hfDetail" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:13px"></div>
     </div>
     <div class="card" id="budgetCard">
       <h3>งบประมาณเดือนนี้ <button class="btn sm" style="background:var(--accent-dim);color:var(--accent)" onclick="openBudget()">+ ตั้งงบ</button></h3>
@@ -598,20 +599,41 @@ function allExpenseInMonth(mk){
 }
 function renderHealth(){
   const allIn=txns.filter(x=>x.type==='income').reduce((a,x)=>a+Number(x.amount),0);
-  const allOut=txns.filter(x=>x.type==='expense').reduce((a,x)=>a+Number(x.amount),0)
-              +payments.reduce((a,p)=>a+Number(p.amount),0);
+  const allExpTx=txns.filter(x=>x.type==='expense').reduce((a,x)=>a+Number(x.amount),0);
+  const allDebtPaid=payments.reduce((a,p)=>a+Number(p.amount),0);
+  const allOut=allExpTx+allDebtPaid;
   const liquid=allIn-allOut;
   // ค่าเฉลี่ยรายจ่าย 3 เดือนล่าสุด
   const months=[];for(let i=0;i<3;i++){const d=new Date(_now.getFullYear(),_now.getMonth()-i,1);months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}
   const exps=months.map(allExpenseInMonth);
   const avg=exps.reduce((a,b)=>a+b,0)/3;
   const elN=document.getElementById('hfMonths'),elD=document.getElementById('hfDesc');
-  if(avg<=0){elN.textContent='–';elN.style.color='var(--muted)';elD.textContent='ยังคำนวณไม่ได้ (ต้องมีข้อมูลรายจ่าย)';return;}
-  const m=liquid/avg;
-  elN.textContent=(m<0?'0':m.toFixed(1))+' เดือน';
-  elN.style.color=m>=6?'var(--pos)':m>=3?'var(--warn)':'var(--neg)';
-  elD.innerHTML=`สินทรัพย์รวมสะสม <b>${baht(liquid)}</b> ÷ รายจ่ายเฉลี่ย <b>${baht(avg)}</b>/เดือน<br>`+
-    (m>=6?'สุขภาพการเงินแข็งแรงมาก 💪':m>=3?'พอใช้ได้ ควรออมเพิ่ม':'เงินสำรองน้อย ควรเริ่มออมด่วน');
+  if(avg<=0){elN.textContent='–';elN.style.color='var(--muted)';elD.textContent='ยังคำนวณไม่ได้ (ต้องมีข้อมูลรายจ่าย)';}
+  else{
+    const m=liquid/avg;
+    elN.textContent=(m<0?'0':m.toFixed(1))+' เดือน';
+    elN.style.color=m>=6?'var(--pos)':m>=3?'var(--warn)':'var(--neg)';
+    elD.innerHTML=`สินทรัพย์รวมสะสม <b>${baht(liquid)}</b> ÷ รายจ่ายเฉลี่ย <b>${baht(avg)}</b>/เดือน<br>`+
+      (m>=6?'สุขภาพการเงินแข็งแรงมาก 💪':m>=3?'พอใช้ได้ ควรออมเพิ่ม':'เงินสำรองน้อย ควรเริ่มออมด่วน');
+  }
+  // รายละเอียดที่มาของตัวเลข
+  const mLabels=months.map(mk=>new Date(mk+'-01T00:00:00').toLocaleDateString('th-TH',{month:'short',year:'2-digit'}));
+  document.getElementById('hfDetail').innerHTML=`
+    <div style="font-weight:700;margin-bottom:8px">📊 ที่มาของสินทรัพย์รวมสะสม (ทุกเดือนรวมกัน)</div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0"><span>รายรับทั้งหมด</span><b class="pos">+${baht(allIn).slice(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0"><span>รายจ่ายทั้งหมด</span><b class="neg">−${baht(allExpTx).slice(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0"><span>ผ่อนหนี้ที่จ่ายไปแล้ว</span><b class="neg">−${baht(allDebtPaid).slice(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0 3px;border-top:1px solid var(--line);margin-top:4px;font-weight:700"><span>= สินทรัพย์รวมสะสม</span><b>${baht(liquid)}</b></div>
+    <div style="font-weight:700;margin:12px 0 8px">📉 รายจ่ายเฉลี่ย/เดือน (3 เดือนล่าสุด)</div>
+    ${months.map((mk,i)=>`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${mLabels[i]}</span><b>${baht(exps[i])}</b></div>`).join('')}
+    <div style="display:flex;justify-content:space-between;padding:7px 0 3px;border-top:1px solid var(--line);margin-top:4px;font-weight:700"><span>= เฉลี่ย</span><b>${baht(avg)}</b></div>
+    <div style="margin-top:12px;color:var(--faint);font-size:12px">หมายเหตุ: ตัวเลขนี้ต่างจาก "คงเหลือเดือนนี้" ด้านบน เพราะอันนี้รวมทุกเดือน + หักยอดผ่อนหนี้ ส่วนด้านบนคิดเฉพาะเดือนที่เลือก</div>`;
+}
+function toggleHealthDetail(){
+  const d=document.getElementById('hfDetail'),t=document.getElementById('hfToggle');
+  const open=d.style.display==='none';
+  d.style.display=open?'block':'none';
+  t.textContent=open?'(ซ่อนที่มา ▴)':'(แตะดูที่มา ▾)';
 }
 
 // ---- budgets ----
